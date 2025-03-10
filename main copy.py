@@ -1,6 +1,7 @@
 import os
 os.environ['KIVY_GL_BACKEND'] = 'angle_sdl2'
 
+import os
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.gridlayout import MDGridLayout
@@ -12,23 +13,40 @@ from kivymd.uix.slider import MDSlider
 from kivy.clock import Clock
 from kivymd.uix.list import OneLineListItem, MDList
 from kivy.uix.image import Image
+from kivymd.uix.progressbar import MDProgressBar
 
 class MusicPlayer(MDApp):
     def build(self):
+        self.theme_cls.theme_style = "Dark"  # Enable dark mode
         self.playlist = []
         self.current_song = None
         self.sound = None
 
         # Main layout with reduced padding and spacing
-        main_layout = MDBoxLayout(orientation='vertical', padding=5, spacing=5)
+        main_layout = MDBoxLayout(orientation='horizontal', padding=5, spacing=5)
         
-        # Add logo at the top with reduced size
-        logo = Image(source='logo.png', size_hint=(1, 0.1))
-        main_layout.add_widget(logo, index=0)
-
+        # Sidebar for playlist
+        sidebar = MDBoxLayout(orientation='vertical', size_hint=(None, 1), width=300, padding=5, spacing=5, md_bg_color=[0.2, 0.2, 0.2, 1])  # Adjusted size_hint and added width
+        playlist_label = MDLabel(text='Playlist', size_hint=(1, 0.1), halign='center', theme_text_color='Custom', text_color=[1, 1, 1, 1])
+        sidebar.add_widget(playlist_label)
+        self.playlist_layout = MDList(size_hint=(1, 0.9))
+        sidebar.add_widget(self.playlist_layout)
+        main_layout.add_widget(sidebar)
+        
+        # Main content area
+        content_layout = MDBoxLayout(orientation='vertical', size_hint=(1, 1), padding=5, spacing=5)  # Adjusted size_hint
+        
+        # Header with logo and app name
+        header_layout = MDBoxLayout(orientation='horizontal', size_hint=(1, None), height=50, padding=5, spacing=5)  # Adjusted size_hint and added height
+        logo = Image(source='logo.png', size_hint=(0.1, 1))
+        header_layout.add_widget(logo)
+        app_name = MDLabel(text='Music Player', size_hint=(0.9, 1), halign='center', theme_text_color='Custom', text_color=[0.1, 0.6, 0.1, 1], font_style='H4')
+        header_layout.add_widget(app_name)
+        content_layout.add_widget(header_layout)
+        
         # Label displaying the current song
-        self.label = MDLabel(text='No song playing', size_hint=(1, 0.05))
-        main_layout.add_widget(self.label)
+        self.label = MDLabel(text='No song playing', size_hint=(1, 0.05), halign='center', theme_text_color='Custom', text_color=[0.9, 0.9, 0.9, 1])
+        content_layout.add_widget(self.label)
         
         # File manager for selecting songs
         self.file_manager = MDFileManager(
@@ -37,17 +55,8 @@ class MusicPlayer(MDApp):
             ext=['.mp3', '.wav']
         )
         
-        # Button to open file manager
-        open_file_manager_button = MDRaisedButton(
-            text='Open File Manager',
-            size_hint=(1, 0.05),
-            pos_hint={'center_x': 0.5}
-        )
-        open_file_manager_button.bind(on_press=self.file_manager_open)
-        main_layout.add_widget(open_file_manager_button)
-        
         # Control buttons (Play/Pause, Stop, Add to Playlist)
-        controls_layout = MDGridLayout(cols=3, size_hint=(1, 0.05), spacing=5)
+        controls_layout = MDGridLayout(cols=3, size_hint=(1, None), height=50, spacing=5)  # Adjusted size_hint and added height
         
         play_button = MDRaisedButton(text='Play/Pause', size_hint=(None, None), size=(80, 40))
         play_button.bind(on_press=self.play_pause_song)
@@ -66,30 +75,45 @@ class MusicPlayer(MDApp):
         add_button.icon = 'playlist-plus'  # Add to playlist icon
         controls_layout.add_widget(add_button)
         
-        main_layout.add_widget(controls_layout)
+        content_layout.add_widget(controls_layout)
         
         # Volume layout with label and slider
-        volume_layout = MDBoxLayout(orientation='horizontal', size_hint=(1, 0.05), spacing=5)
+        volume_layout = MDBoxLayout(orientation='horizontal', size_hint=(1, None), height=50, spacing=5)  # Adjusted size_hint and added height
         self.volume_slider = MDSlider(min=0, max=1, value=1, size_hint=(0.8, 1))
         self.volume_slider.bind(value=self.set_volume)
-        self.volume_label = MDLabel(text=f'Volume: {self.volume_slider.value:.2f}', size_hint=(0.2, 1))
+        self.volume_label = MDLabel(text=f'Volume: {self.volume_slider.value:.2f}', size_hint=(0.2, 1), halign='center', theme_text_color='Custom', text_color=[0.9, 0.9, 0.9, 1])
         volume_layout.add_widget(self.volume_label)
         volume_layout.add_widget(self.volume_slider)
-        main_layout.add_widget(volume_layout)
+        content_layout.add_widget(volume_layout)
+        
+        # Progress bar for song duration
+        self.progress_bar = MDProgressBar(value=0, max=100, size_hint=(1, None), height=20)  # Adjusted size_hint and added height
+        content_layout.add_widget(self.progress_bar)
         
         # Duration label showing song duration
-        self.duration_label = MDLabel(text='Duration: 0:00', size_hint=(1, 0.05))
-        main_layout.add_widget(self.duration_label)
+        self.duration_label = MDLabel(text='Duration: 0:00', size_hint=(1, None), height=30, halign='center', theme_text_color='Custom', text_color=[0.9, 0.9, 0.9, 1])  # Adjusted size_hint and added height
+        content_layout.add_widget(self.duration_label)
 
-        # Playlist list layout
-        self.playlist_layout = MDList(size_hint=(1, 0.3))
-        main_layout.add_widget(self.playlist_layout)
+        main_layout.add_widget(content_layout)
+
+        # File manager button at the bottom using MDRaisedButton
+        file_manager_button = MDRaisedButton(
+            text="Open File Manager",
+            size_hint=(None, None),
+            size=(150, 50),
+            pos_hint={'center_x': 0.5, 'center_y': 0.1},
+            md_bg_color=[0.2, 0.6, 0.2, 1],
+            theme_text_color="Custom",
+            text_color=[1, 1, 1, 1]
+        )
+        file_manager_button.bind(on_press=self.file_manager_open)
+        content_layout.add_widget(file_manager_button)
 
         return main_layout
 
     def file_manager_open(self, *args):
-        # Open file manager at user's home directory
-        self.file_manager.show(os.path.expanduser('~')) 
+        # Open file manager at current directory
+        self.file_manager.show(os.getcwd()) 
 
     def select_path(self, path):
         self.exit_manager()
@@ -116,6 +140,7 @@ class MusicPlayer(MDApp):
             self.sound = None
             self.label.text = 'No song playing'
             self.duration_label.text = 'Duration: 0:00'
+            self.progress_bar.value = 0
             Clock.unschedule(self.update_progress)
 
     def play_song(self):
@@ -128,6 +153,7 @@ class MusicPlayer(MDApp):
                 self.sound.volume = self.volume_slider.value
                 self.label.text = f'Playing: {os.path.basename(self.current_song)}'
                 self.duration_label.text = f'Duration: {self.format_duration(self.sound.length)}'
+                self.progress_bar.max = self.sound.length
                 Clock.schedule_interval(self.update_progress, 1)
             else:
                 self.label.text = 'Failed to load song'
@@ -157,6 +183,7 @@ class MusicPlayer(MDApp):
             current_pos = self.sound.get_pos()
             current_time = self.format_duration(current_pos)
             self.duration_label.text = f'Current Time: {current_time} / Duration: {self.format_duration(self.sound.length)}'
+            self.progress_bar.value = current_pos
             if current_pos >= self.sound.length:
                 self.stop_song(None)
                 Clock.unschedule(self.update_progress)
