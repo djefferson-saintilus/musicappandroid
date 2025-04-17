@@ -46,20 +46,9 @@ class DraggableSidebar(DragBehavior, RelativeLayout):
 
 class MusicPlayer(MDApp):
     def build(self):
-        # Dynamically adjust screen resolution for Android devices
+        # Simplify screen resolution logic for compatibility with Pydroid 3
         if platform == "android":
-            try:
-                from jnius import autoclass
-                DisplayMetrics = autoclass('android.util.DisplayMetrics')
-                metrics = DisplayMetrics()
-                WindowManager = autoclass('android.view.WindowManager')
-                activity = autoclass('org.kivy.android.PythonActivity').mActivity
-                window_manager = activity.getWindowManager()
-                window_manager.getDefaultDisplay().getMetrics(metrics)
-                Window.size = (metrics.widthPixels / metrics.density, metrics.heightPixels / metrics.density)
-            except Exception as e:
-                print(f"Error setting Android screen resolution: {e}")
-                Window.size = (360, 640)  # Fallback to default size
+            Window.fullscreen = True  # Use fullscreen mode for Android
         else:
             Window.size = (360, 640)  # Default size for non-Android platforms
 
