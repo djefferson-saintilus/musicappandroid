@@ -12,6 +12,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.behaviors import DragBehavior
 from kivy.graphics import Color, Rectangle
+from kivy.utils import platform
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -45,7 +46,19 @@ class DraggableSidebar(DragBehavior, RelativeLayout):
 
 class MusicPlayer(MDApp):
     def build(self):
-        Window.size = (360, 640)
+        # Dynamically adjust screen resolution for Android devices
+        if platform == "android":
+            from jnius import autoclass
+            DisplayMetrics = autoclass('android.util.DisplayMetrics')
+            metrics = DisplayMetrics()
+            WindowManager = autoclass('android.view.WindowManager')
+            activity = autoclass('org.kivy.android.PythonActivity').mActivity
+            window_manager = activity.getWindowManager()
+            window_manager.getDefaultDisplay().getMetrics(metrics)
+            Window.size = (metrics.widthPixels / metrics.density, metrics.heightPixels / metrics.density)
+        else:
+            Window.size = (360, 640)  # Default size for non-Android platforms
+
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "BlueGray"  # Changed primary theme color
 
