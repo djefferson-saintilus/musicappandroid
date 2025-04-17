@@ -48,14 +48,18 @@ class MusicPlayer(MDApp):
     def build(self):
         # Dynamically adjust screen resolution for Android devices
         if platform == "android":
-            from jnius import autoclass
-            DisplayMetrics = autoclass('android.util.DisplayMetrics')
-            metrics = DisplayMetrics()
-            WindowManager = autoclass('android.view.WindowManager')
-            activity = autoclass('org.kivy.android.PythonActivity').mActivity
-            window_manager = activity.getWindowManager()
-            window_manager.getDefaultDisplay().getMetrics(metrics)
-            Window.size = (metrics.widthPixels / metrics.density, metrics.heightPixels / metrics.density)
+            try:
+                from jnius import autoclass
+                DisplayMetrics = autoclass('android.util.DisplayMetrics')
+                metrics = DisplayMetrics()
+                WindowManager = autoclass('android.view.WindowManager')
+                activity = autoclass('org.kivy.android.PythonActivity').mActivity
+                window_manager = activity.getWindowManager()
+                window_manager.getDefaultDisplay().getMetrics(metrics)
+                Window.size = (metrics.widthPixels / metrics.density, metrics.heightPixels / metrics.density)
+            except Exception as e:
+                print(f"Error setting Android screen resolution: {e}")
+                Window.size = (360, 640)  # Fallback to default size
         else:
             Window.size = (360, 640)  # Default size for non-Android platforms
 
