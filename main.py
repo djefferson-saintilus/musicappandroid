@@ -116,6 +116,16 @@ class MusicPlayer(MDApp):
 
         progress_layout = MDBoxLayout(orientation='horizontal', size_hint=(1, None), height=dp(25),
                                       padding=dp(5), spacing=dp(5))
+        # Ensure the current time label is properly initialized
+        self.current_time_label = MDLabel(
+            text='0:00',
+            size_hint=(1, 1),
+            halign='center',
+            theme_text_color='Custom',
+            text_color=[1, 1, 1, 1],
+            font_size=sp(12)
+        )
+        progress_layout.add_widget(self.current_time_label)
         content_layout.add_widget(progress_layout)
 
         volume_layout = MDBoxLayout(orientation='horizontal', size_hint=(1, None), height=dp(30), spacing=dp(5))
@@ -212,9 +222,15 @@ class MusicPlayer(MDApp):
 
     def update_progress(self, dt):
         if self.sound and self.sound.state == 'play':
-            current_pos = self.sound.get_pos()
-            if current_pos >= self.sound.length:
+            # Manually increment playback position
+            self.playback_position += dt
+            if self.sound.length and self.playback_position >= self.sound.length:
                 self.play_next_song(None)
+            else:
+                # Update the current time label with the manually tracked position
+                self.current_time_label.text = self.format_duration(self.playback_position)
+        else:
+            print("Warning: Sound is not playing")
 
     def play_song(self):
         if self.sound:
@@ -226,14 +242,18 @@ class MusicPlayer(MDApp):
                 self.sound.volume = self.volume_slider.value
                 self.update_metadata()
                 self.play_button.icon = 'pause-circle'
+                self.playback_position = 0  # Initialize manual playback position
                 Clock.unschedule(self.update_progress)
-                Clock.schedule_interval(self.update_progress, 1)
+                Clock.schedule_interval(self.update_progress, 0.5)
+                print(f"Playing: {self.current_song}")
             else:
                 self.song_title.text = 'Failed to load song'
                 self.artist_name.text = ''
+                print("Error: Failed to load sound")
         else:
             self.song_title.text = 'No song selected'
             self.artist_name.text = ''
+            print("Error: No song selected")
 
     def update_metadata(self):
         try:
